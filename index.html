@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>carebridge live board - Phase 2</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌈</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f4f3f0;color:#1a1a1a;line-height:1.6;font-size:14px}
+
+/* Header */
+.header{background:#1a1a1a;color:#fff;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header-left{display:flex;align-items:center;gap:16px}
+.header-brand{font-size:18px;font-weight:700;letter-spacing:-.5px}
+.header-sub{font-size:12px;color:#aaa}
+.header-right{display:flex;align-items:center;gap:12px}
+.last-updated{font-size:11px;color:#888}
+.refresh-btn{background:#534AB7;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s}
+.refresh-btn:hover{background:#4339a0}
+.refresh-btn.loading{background:#666;pointer-events:none}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#1D9E75;display:inline-block;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Layout */
+.main{max-width:1400px;margin:0 auto;padding:24px 32px}
+
+/* Summary Cards */
+.summary-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-bottom:20px}
+.scard{background:#fff;border-radius:12px;padding:16px 18px;border:1px solid #e8e8e6;text-align:center}
+.scard-label{font-size:11px;color:#888;margin-bottom:4px;white-space:nowrap}
+.scard-num{font-size:28px;font-weight:700;letter-spacing:-.5px;line-height:1}
+.scard-unit{font-size:12px;color:#aaa;font-weight:400;margin-left:2px}
+.scard-sub{font-size:11px;color:#bbb;margin-top:4px}
+.num-care{color:#0F6E56}
+.num-mediai{color:#185FA5}
+.num-total{color:#534AB7}
+.num-reply{color:#1D9E75}
+
+/* Two column layout */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+
+/* Section cards */
+.sec{background:#fff;border-radius:14px;border:1px solid #eee;padding:20px;margin-bottom:16px}
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sec-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:#E24B4A;flex-shrink:0}
+.dot-green{background:#0F6E56}
+.dot-blue{background:#185FA5}
+.dot-purple{background:#534AB7}
+
+/* Tab buttons */
+.tab-row{display:flex;gap:6px;margin-bottom:16px}
+.tab-btn{padding:6px 14px;border-radius:6px;border:1px solid #e0e0e0;background:#f8f8f8;font-size:12px;font-weight:600;cursor:pointer;color:#888;transition:all .15s}
+.tab-btn.active{background:#534AB7;color:#fff;border-color:#534AB7}
+
+/* Post list */
+.post-list{display:flex;flex-direction:column;gap:8px;max-height:960px;overflow-y:auto}
+.post-item{border:1px solid #eee;border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .15s;background:#fafafa}
+.post-item:hover{border-color:#534AB7;background:#fff}
+.post-item.answered{border-left:3px solid #1D9E75}
+.post-item.official{border-left:3px solid #0F6E56;background:#FAFCFA}
+.post-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px}
+.post-subject{font-size:13px;font-weight:600;color:#1a1a1a;flex:1;line-height:1.4}
+.post-badges{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600}
+.badge-answered{background:#E1F5EE;color:#0F6E56}
+.badge-official{background:#FCEBEB;color:#A32D2D}
+.badge-new{background:#FFF3E0;color:#E65100}
+.post-meta{font-size:11px;color:#aaa;display:flex;align-items:center;gap:8px}
+.post-preview{font-size:12px;color:#666;margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.post-comments{font-size:11px;color:#534AB7;font-weight:600}
+
+/* Category bar */
+.cat-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.cat-chip{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s}
+.cat-chip.active{opacity:1}
+.cat-chip:not(.active){opacity:.55}
+
+/* Stats table */
+.stats-tbl{width:100%;font-size:12px;border-collapse:collapse}
+.stats-tbl th{text-align:left;font-weight:600;color:#888;padding:6px 8px;border-bottom:1px solid #eee}
+.stats-tbl td{padding:8px;border-bottom:1px solid #f4f4f4}
+.stats-tbl tr:last-child td{border-bottom:none}
+.stats-tbl .num{font-weight:700;text-align:right}
+
+/* Timeline */
+.timeline{display:flex;flex-direction:column;gap:0}
+.tl-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f4f4f4;align-items:flex-start}
+.tl-item:last-child{border-bottom:none}
+.tl-dot{width:8px;height:8px;border-radius:50%;background:#534AB7;flex-shrink:0;margin-top:5px}
+.tl-dot.care{background:#0F6E56}
+.tl-dot.mediai{background:#185FA5}
+.tl-content{flex:1;min-width:0}
+.tl-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-meta{font-size:11px;color:#aaa;margin-top:2px}
+.tl-reply-badge{font-size:10px;background:#E1F5EE;color:#0F6E56;padding:1px 6px;border-radius:3px;font-weight:600}
+
+/* Action report */
+.ar-table{width:100%;font-size:12px;border-collapse:collapse}
+.ar-table td{padding:8px 10px;border-bottom:1px solid #f0f0f0}
+.ar-table tr:last-child td{border-bottom:none}
+.ar-table td:first-child{color:#555;width:45%}
+.ar-done{color:#0F6E56;font-weight:600}
+.ar-wip{color:#854F0B;font-weight:500}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:24px}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:620px;max-height:80vh;overflow-y:auto;padding:28px}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888}
+.modal-subject{font-size:18px;font-weight:700;margin-bottom:8px;line-height:1.4}
+.modal-meta{font-size:12px;color:#aaa;margin-bottom:16px;display:flex;gap:12px}
+.modal-body{font-size:13px;color:#444;line-height:1.8;border-top:1px solid #f0f0f0;padding-top:14px;margin-bottom:16px}
+.modal-comments-title{font-size:13px;font-weight:700;color:#534AB7;margin-bottom:8px}
+.comment-item{background:#f8f8f8;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:#555;line-height:1.7}
+.comment-author{font-size:11px;font-weight:700;color:#1a1a1a;margin-bottom:4px}
+
+/* Loading/Error states */
+.loading-msg{text-align:center;padding:40px;color:#aaa;font-size:13px}
+.error-msg{text-align:center;padding:24px;color:#A32D2D;font-size:13px;background:#FCEBEB;border-radius:8px}
+
+/* Action report section */
+.ar-box{border-radius:10px;padding:16px;margin-bottom:12px}
+.ar-box.done{background:#f0faf5;border:1px solid #c0e8d0}
+.ar-box.wip{background:#FFFBF0;border:1px solid #f0dda0}
+.ar-box.ceo{background:#EFF5FF;border:1px solid #c0d8f0}
+.ar-box h4{font-size:13px;font-weight:700;margin-bottom:10px}
+.ar-box.done h4{color:#0F6E56}
+.ar-box.wip h4{color:#854F0B}
+.ar-box.ceo h4{color:#185FA5}
+
+/* Admin panel */
+.admin-modal{max-width:760px;max-height:88vh}
+.admin-section{margin-bottom:20px}
+.admin-section h4{font-size:13px;font-weight:700;color:#333;margin-bottom:10px}
+.admin-user-card{border:1px solid #eee;border-radius:8px;padding:12px 14px;margin-bottom:8px;background:#fafafa}
+.admin-user-card .comment-preview{font-size:12px;color:#555;margin:4px 0 8px;line-height:1.5;background:#f0f0f0;border-radius:4px;padding:6px 8px}
+.admin-user-card .user-id{font-size:10px;color:#aaa;margin-bottom:6px;font-family:monospace}
+.admin-table{width:100%;font-size:12px;border-collapse:collapse}
+.admin-table td{padding:7px 8px;border-bottom:1px solid #f4f4f4;vertical-align:middle}
+.admin-table tr:last-child td{border-bottom:none}
+.admin-select{width:100%;padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;background:#fff}
+.admin-save-btn{padding:6px 14px;background:#534AB7;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap}
+.admin-save-btn:hover{background:#4339a0}
+.admin-del-btn{padding:3px 8px;font-size:11px;color:#A32D2D;background:none;border:1px solid #f0c0c0;border-radius:4px;cursor:pointer}
+.admin-del-btn:hover{background:#FCEBEB}
+.admin-reset-btn{padding:3px 8px;font-size:11px;color:#888;background:none;border:1px solid #e0e0e0;border-radius:4px;cursor:pointer}
+.admin-empty{text-align:center;color:#bbb;font-size:13px;padding:28px 0}
+.admin-scroll{max-height:360px;overflow-y:auto}
+.admin-btn-header{background:#333;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px}
+.admin-btn-header:hover{background:#555}
+/* Author edit popup */
+.author-edit-popup{display:none;position:fixed;background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:16px;box-shadow:0 6px 24px rgba(0,0,0,.18);z-index:3000;width:280px}
+.author-edit-popup h5{font-size:12px;font-weight:700;color:#333;margin-bottom:10px}
+.author-edit-input{width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;font-size:13px;margin-bottom:10px;outline:none}
+.author-edit-input:focus{border-color:#534AB7}
+.author-edit-btns{display:flex;gap:8px;justify-content:flex-end}
+/* Admin editable author */
+.admin-editable-author{cursor:pointer;border-bottom:1px dashed #aaa;color:#534AB7 !important;font-weight:600 !important}
+
+/* Cat Stats Grid */
+.cat-stats-grid{display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;gap:0}
+.cat-stats-col{padding:4px 24px;min-height:520px;min-width:0;overflow:hidden}
+.cat-stats-divider{background:#f0f0f0}
+
+/* Responsive */
+@media(max-width:1200px){
+  .summary-grid{grid-template-columns:repeat(4,1fr)}
+}
+@media(max-width:1024px){
+  .summary-grid{grid-template-columns:repeat(4,1fr)}
+  .two-col,.three-col{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  .main{padding:12px}
+  .header{padding:10px 16px}
+  .header-sub{display:none}
+  .header-brand{font-size:15px}
+  .last-updated{display:none}
+  .summary-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+  .scard{padding:12px 8px}
+  .scard-num{font-size:22px}
+  .scard-label{font-size:10px;white-space:normal;line-height:1.3}
+  .sec{padding:14px}
+  .sec-header{flex-wrap:wrap;gap:8px}
+  .tab-row{overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tab-row::-webkit-scrollbar{display:none}
+  .post-list{max-height:480px}
+  .modal-overlay{padding:0;align-items:flex-end}
+  .modal{border-radius:16px 16px 0 0;max-width:100%;max-height:90vh;padding:20px 16px}
+  .modal-subject{font-size:15px}
+  .modal-meta{flex-wrap:wrap;gap:6px}
+  .cat-stats-grid{grid-template-columns:1fr}
+  .cat-stats-col{min-height:unset;padding:16px 0}
+  .cat-stats-col:first-child{padding-top:4px}
+  .cat-stats-divider{height:1px;width:100%}
+  .admin-modal{max-width:100%;border-radius:16px 16px 0 0}
+  .admin-modal .modal-overlay{align-items:flex-end;padding:0}
+}
+@media(max-width:480px){
+  .summary-grid{grid-template-columns:repeat(2,1fr)}
+  .header-right{gap:6px}
+  .refresh-btn,.admin-btn-header{padding:6px 10px;font-size:11px}
+  .scard-num{font-size:20px}
+}
+</style>
+<script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div>
+      <div class="header-brand"><span class="live-dot" style="margin-right:6px"></span>케어브릿지 라이브 보드</div>
+      <div class="header-sub">GC케어 + GC메디아이 · 운영기간: 2026.06.01 ~ 08.31 · 기업문화팀</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="last-updated" id="lastUpdated">데이터 불러오는 중...</div>
+    <button class="admin-btn-header" onclick="openAdminPanel()">⚙️ 관리</button>
+    <button class="refresh-btn" id="refreshBtn" onclick="loadAll()">↻ 새로고침</button>
+  </div>
+</div>
+
+<div id="adminModeBar" style="display:none;background:#534AB7;color:#fff;padding:8px 32px;font-size:12px;align-items:center;justify-content:space-between;gap:12px">
+  <span>🔑 관리자 모드 활성화 — 게시물 카드의 카테고리를 직접 수정할 수 있습니다. 게시물 클릭 시 카테고리 변경도 가능합니다.</span>
+  <button onclick="exitAdminMode()" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:#fff;padding:4px 14px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap">종료</button>
+</div>
+
+<div class="main">
+
+  <!-- Summary Cards -->
+  <div class="summary-grid" id="summaryCards">
+    <div class="scard"><div class="scard-label">전체 게시물</div><div class="scard-num num-total" id="s-total-posts">-</div></div>
+    <div class="scard"><div class="scard-label">GC케어 게시물</div><div class="scard-num num-care" id="s-care-posts">-</div></div>
+    <div class="scard"><div class="scard-label">GC메디아이 게시물</div><div class="scard-num num-mediai" id="s-mediai-posts">-</div></div>
+    <div class="scard"><div class="scard-label">전체 댓글</div><div class="scard-num num-total" id="s-total-comments">-</div></div>
+    <div class="scard"><div class="scard-label">총 좋아요 수 ❤️</div><div class="scard-num" id="s-total-likes" style="color:#E24B4A">-</div><div class="scard-sub" id="s-likes-sub">업로드 필요</div></div>
+    <div class="scard"><div class="scard-label">공식 답변 완료</div><div class="scard-num num-reply" id="s-answered">-</div><div class="scard-sub" id="s-answered-sub">-</div></div>
+    <div class="scard"><div class="scard-label">최근 7일 새 게시물</div><div class="scard-num" id="s-today" style="color:#E24B4A">-</div></div>
+  </div>
+
+
+  <!-- Post Feeds -->
+  <div class="two-col">
+
+    <!-- GC케어 -->
+    <div class="sec">
+      <div class="sec-header">
+        <div class="sec-title"><span class="dot dot-green"></span>GC케어브릿지</div>
+        <span style="font-size:11px;color:#aaa" id="care-count">불러오는 중...</span>
+      </div>
+      <div class="tab-row" id="care-tabs">
+        <button class="tab-btn active" onclick="filterPosts('care','all',this)">전체</button>
+        <button class="tab-btn" onclick="filterPosts('care','answered',this)">답변완료</button>
+        <button class="tab-btn" onclick="filterPosts('care','unanswered',this)">미답변</button>
+        <button class="tab-btn" onclick="filterPosts('care','new',this)">최신순</button>
+        <button class="tab-btn" onclick="filterPosts('care','notice',this)">공지</button>
+      </div>
+      <div class="post-list" id="care-posts"><div class="loading-msg">불러오는 중...</div></div>
+    </div>
+
+    <!-- GC메디아이 -->
+    <div class="sec">
+      <div class="sec-header">
+        <div class="sec-title"><span class="dot dot-blue"></span>GC메디아이 케어브릿지</div>
+        <span style="font-size:11px;color:#aaa" id="mediai-count">불러오는 중...</span>
+      </div>
+      <div class="tab-row" id="mediai-tabs">
+        <button class="tab-btn active" onclick="filterPosts('mediai','all',this)">전체</button>
+        <button class="tab-btn" onclick="filterPosts('mediai','answered',this)">답변완료</button>
+        <button class="tab-btn" onclick="filterPosts('mediai','unanswered',this)">미답변</button>
+        <button class="tab-btn" onclick="filterPosts('mediai','new',this)">최신순</button>
+        <button class="tab-btn" onclick="filterPosts('mediai','notice',this)">공지</button>
+      </div>
+      <div class="post-list" id="mediai-posts"><div class="loading-msg">불러오는 중...</div></div>
+    </div>
+
+  </div>
+
+  <!-- 게시물 분석 (풀너비) -->
+  <div class="sec" style="margin-bottom:16px">
+    <div class="sec-header">
+      <div class="sec-title"><span class="dot dot-purple"></span>게시물 분석</div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="display:flex;gap:5px" id="catFilterBtns">
+          <button class="tab-btn active" onclick="setCatFilter('all',this)">전체</button>
+          <button class="tab-btn" onclick="setCatFilter('care',this)">GC케어</button>
+          <button class="tab-btn" onclick="setCatFilter('mediai',this)">GC메디아이</button>
+        </div>
+        <span style="font-size:11px;color:#aaa" id="cat-total-label"></span>
+      </div>
+    </div>
+    <div id="cat-stats"><div class="loading-msg">불러오는 중...</div></div>
+  </div>
+
+  <!-- Phase 2 Action Report (동적) -->
+  <div class="sec" id="phase1-sec">
+    <div class="sec-header">
+      <div class="sec-title"><span class="dot dot-green"></span>Phase 2 Action Report</div>
+      <span id="phase1-period" style="font-size:11px;background:#E1F5EE;color:#0F6E56;padding:3px 10px;border-radius:20px;font-weight:600"></span>
+    </div>
+    <div id="phase1-report"></div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-subject" id="modalSubject"></div>
+    <div class="modal-meta" id="modalMeta"></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div id="modalComments"></div>
+  </div>
+</div>
+
+<!-- Author Edit Popup -->
+<div class="author-edit-popup" id="authorEditPopup">
+  <h5 id="authorEditTitle">게시글 작성자 수정</h5>
+  <input class="author-edit-input" id="authorEditInput" type="text" placeholder="표시할 이름 입력..."
+    onkeydown="if(event.key==='Enter')confirmAuthorEdit();if(event.key==='Escape')closeAuthorEdit()">
+  <div class="author-edit-btns">
+    <button onclick="closeAuthorEdit()" style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:12px">취소</button>
+    <button onclick="clearAuthorEdit()" style="padding:6px 12px;border:1px solid #f0c0c0;border-radius:6px;background:#fff;color:#A32D2D;cursor:pointer;font-size:12px">초기화</button>
+    <button onclick="confirmAuthorEdit()" style="padding:6px 14px;background:#534AB7;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">저장</button>
+  </div>
+</div>
+
+<!-- Admin Auth Modal -->
+<div class="modal-overlay" id="authOverlay" onclick="if(event.target===this)closeAuth()">
+  <div class="modal" style="position:relative;max-width:340px;text-align:center;padding:36px 32px">
+    <button class="modal-close" onclick="closeAuth()">×</button>
+    <div style="font-size:36px;margin-bottom:12px">🔒</div>
+    <div style="font-size:17px;font-weight:700;margin-bottom:6px">관리자 인증</div>
+    <div style="font-size:13px;color:#aaa;margin-bottom:20px">비밀번호를 입력하세요</div>
+    <input type="password" id="adminPwInput" placeholder="비밀번호" maxlength="20"
+      style="width:100%;padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:15px;text-align:center;outline:none;margin-bottom:10px"
+      onkeydown="if(event.key==='Enter')checkAdminPw()"
+      onfocus="this.style.borderColor='#534AB7'" onblur="this.style.borderColor='#ddd'">
+    <div id="authError" style="color:#A32D2D;font-size:12px;margin-bottom:12px;min-height:18px"></div>
+    <button onclick="checkAdminPw()" style="width:100%;padding:12px;background:#534AB7;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">확인</button>
+  </div>
+</div>
+
+<!-- Admin Modal -->
+<div class="modal-overlay" id="adminOverlay" onclick="if(event.target===this)closeAdmin()">
+  <div class="modal admin-modal" style="position:relative">
+    <button class="modal-close" onclick="closeAdmin()">×</button>
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px">⚙️ 관리자 패널</div>
+    <div class="tab-row" id="adminTabs">
+      <button class="tab-btn active" onclick="showAdminTab('users',this)">미확인 답변자</button>
+      <button class="tab-btn" onclick="showAdminTab('categories',this)">카테고리 수정</button>
+      <button class="tab-btn" onclick="showAdminTab('likes',this)">❤️ 반응 수 업로드</button>
+      <button class="tab-btn" onclick="showAdminTab('actionReport',this)">📋 Action Report</button>
+      <button class="tab-btn" onclick="showAdminTab('analytics',this)">📊 방문자 통계</button>
+      <button class="tab-btn" onclick="showAdminTab('overrides',this)">등록된 설정</button>
+    </div>
+    <div id="adminUsers"></div>
+    <div id="adminCategories" style="display:none"></div>
+    <div id="adminLikes" style="display:none"></div>
+    <div id="adminActionReport" style="display:none"></div>
+    <div id="adminAnalytics" style="display:none"></div>
+    <div id="adminOverridesList" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+const API_KEY = 'pdltp_5716c39ced4a5a58524819231dd34fc275002297b85753e6896e9eb84be523c314c731';
+const BOARDS = {
+  care:   { id: 'gvwqazectoqa17b5', label: 'GC케어',    color: '#0F6E56' },
+  mediai: { id: 'f595uf0qvjbp3wwc', label: 'GC메디아이', color: '#185FA5' }
+};
+
+// 답변 채널 매핑 — user ID 기준 (API 댓글 분석으로 확인)
+const RESPONDERS = {
+  'user_aojgJRrxrV40JPwq': { name: '대표님',      icon: '👤', color: '#A32D2D', bg: '#FCEBEB', group: 'ceo'     },
+  'user_MNAG1GRj8ra7brOy': { name: '기업문화팀',   icon: '🏢', color: '#534AB7', bg: '#EEEDFE', group: 'culture' },
+  'user_ZQ6WDaBgx5mRb4rp': { name: '본부장 최지선',icon: '🏛️', color: '#185FA5', bg: '#E6F1FB', group: 'manager' },
+  // 인사지원팀 확인된 7개 계정
+  'user_6KjEbkq7yM2BJVlQ': { name: '인사지원팀',   icon: '📋', color: '#0F6E56', bg: '#E1F5EE', group: 'hr' },
+  'user_MmoaJ8dX97ZzJX7p': { name: '인사지원팀',   icon: '📋', color: '#0F6E56', bg: '#E1F5EE', group: 'hr' },
+  'user_qAenJvQQXzal1457': { name: '인사지원팀',   icon: '📋', color: '#0F6E56', bg: '#E1F5EE', group: 'hr' },
+  'user_6Rel1Ke2x8gjDm2Y': { name: '인사지원팀',   icon: '📋', color: '#0F6E56', bg: '#E1F5EE', group: 'hr' },
+  'user_6795D58AEX8yJ0mQ': { name: '인사지원팀',   icon: '📋', color: '#0F6E56', bg: '#E1F5EE', group: 'hr' },
+  'user_0ZvVJldem2GRJXmO': { name: '인사지원팀',   icon: '📋', color: '#0F6E56', bg: '#E1F5EE', group: 'hr' },
+  'user_Z73VJwQ2pYkAb2pj': { name: '인사지원팀',   icon: '📋', color: '#0F6E56', bg: '#E1F5EE', group: 'hr' },
+};
+
+// username 기반 매핑 — 향후 새 계정 댓글도 자동 감지
+const RESPONDERS_BY_USERNAME = {
+  'gcjtkim':  { name: '대표님',       icon: '👤', color: '#A32D2D', bg: '#FCEBEB', group: 'ceo'     },
+  'gcgwpark': { name: '기업문화팀',    icon: '🏢', color: '#534AB7', bg: '#EEEDFE', group: 'culture' },
+  'gcescho':  { name: '기업문화팀',    icon: '🏢', color: '#534AB7', bg: '#EEEDFE', group: 'culture' },
+  'gckckim':  { name: '인사문화유닛',  icon: '🗂️', color: '#854F0B', bg: '#FFF3E0', group: 'unit'    },
+  'gclrheo':  { name: '현업부서',      icon: '💼', color: '#555',    bg: '#f0f0f0', group: 'field'   },
+};
+
+// username → userId 런타임 캐시 (포스트 파싱 시 누적)
+const usernameToUserId = {};
+
+// 공식 글 작성자 username (이 계정이 쓴 포스트 → [공지] 표시)
+const OFFICIAL_USERNAMES = new Set(['gcjtkim','gcgwpark','gcescho','gckckim']);
+
+// Category keywords
+const CAT_RULES = [
+  { cat: '보상/평가',  kw: ['연봉','급여','임금','인상','평가','성과급','포괄','비포괄','퇴직금','DC','DB','보상','처우','페이'] },
+  { cat: '복리후생',   kw: ['복지','카페','식대','식비','주차','보육','수당','경조','휴가','보상휴가','동호회','헬스','복리'] },
+  { cat: '근무환경',   kw: ['야근','초과','근무','제도','출퇴근','재택','시간','출근','퇴근','신청','화장실','에어컨','냉방','냉난방','공기','소음','시설','청소','주방','냄새','덥','춥','FCU','환경','인프라'] },
+  { cat: '조직문화',   kw: ['호칭','문화','소통','협업','분위기','조직','팀','리더','라포','온보딩','교육','피드백'] },
+  { cat: '사업방향',   kw: ['사업','전략','방향','브랜드','투자','신사업','GC','유비','합병','인수','비전'] },
+];
+
+function classifyPost(subject, body) {
+  const text = (subject + ' ' + body).toLowerCase();
+  for (const rule of CAT_RULES) {
+    if (rule.kw.some(k => text.includes(k.toLowerCase()))) return rule.cat;
+  }
+  return '기타';
+}
+
+function timeAgo(isoStr) {
+  const diff = (Date.now() - new Date(isoStr)) / 1000;
+  if (diff < 60)    return '방금 전';
+  if (diff < 3600)  return Math.floor(diff/60) + '분 전';
+  if (diff < 86400) return Math.floor(diff/3600) + '시간 전';
+  return Math.floor(diff/86400) + '일 전';
+}
+
+function isToday(isoStr) {
+  const d = new Date(isoStr);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+}
+
+function isWithin7Days(isoStr) {
+  const diff = Date.now() - new Date(isoStr);
+  return diff >= 0 && diff < 7 * 24 * 3600 * 1000;
+}
+
+function stripHtml(html) {
+  return (html || '').replace(/<[^>]*>/g, '').replace(/&[a-z]+;/g, ' ').trim();
+}
+
+// Admin overrides — persisted in localStorage
+const LS_KEY = 'carebridge_admin_phase2_v1';
+const DEFAULT_ACTION_REPORT = {
+  period: '2026.06.01 ~ 08.31',
+  done: [],
+  wip: [],
+  ceo: [],
+};
+
+let OVERRIDES = (() => {
+  try {
+    const s = JSON.parse(localStorage.getItem(LS_KEY)) || {};
+    return { users: {}, categories: {}, postAuthors: {}, likes: {}, actionReport: null, ...s };
+  }
+  catch { return { users: {}, categories: {}, postAuthors: {}, likes: {}, actionReport: null }; }
+})();
+function saveOverrides() { localStorage.setItem(LS_KEY, JSON.stringify(OVERRIDES)); }
+// Apply saved user overrides to RESPONDERS on init
+Object.entries(OVERRIDES.users).forEach(([uid, info]) => { RESPONDERS[uid] = info; });
+
+// Group presets for admin panel
+const GROUP_PRESETS = {
+  ceo:     { name: '대표님',       icon: '👤', color: '#A32D2D', bg: '#FCEBEB' },
+  culture: { name: '기업문화팀',    icon: '🏢', color: '#534AB7', bg: '#EEEDFE' },
+  hr:      { name: '인사지원팀',    icon: '📋', color: '#0F6E56', bg: '#E1F5EE' },
+  manager: { name: '본부장',        icon: '🏛️', color: '#185FA5', bg: '#E6F1FB' },
+  unit:    { name: '인사문화유닛',  icon: '🗂️', color: '#854F0B', bg: '#FFF3E0' },
+  field:   { name: '현업부서',      icon: '💼', color: '#555',    bg: '#f0f0f0' },
+};
+
+// Unknown commenters encountered during fetch (authorId → info)
+const unknownCommenters = {};
+
+// State
+let isAdminMode = false;
+let _editingPostId = null;   // 작성자 편집 팝업용
+let _currentModalPostId = null; // 현재 열린 모달 post id
+let state = { care: null, mediai: null };
+let currentFilter = { care: 'all', mediai: 'all' };
+let catChartFilter = 'all';
+const POST_STORE = {}; // id → post 객체 (모달 안전 참조용)
+
+async function fetchBoard(key) {
+  const { id } = BOARDS[key];
+  const baseUrl = `https://api.padlet.dev/v1/boards/${id}`;
+  const headers = { 'x-api-key': API_KEY, 'Accept': 'application/vnd.api+json' };
+  // 보드 데이터 fetch (필수)
+  const boardResp = await fetch(`${baseUrl}?include=posts,sections,comments`, { headers });
+  if (!boardResp.ok) throw new Error(`API ${boardResp.status}`);
+  const json = await boardResp.json();
+
+  const included = json.included || [];
+  const posts    = included.filter(x => x.type === 'post');
+  const comments = included.filter(x => x.type === 'comment');
+
+  // Padlet API v1은 reactions 조회(GET) 엔드포인트를 제공하지 않음 (생성 전용)
+  const likesMap = {};
+
+  // Build comment map per post
+  const commentMap = {};
+  const responderMap = {}; // pid -> [responder info, ...]
+  const commentsByPost = {};
+
+  // 포스트에서 username → userId 정확한 매핑 (relationships.author.data.id)
+  for (const p of posts) {
+    const uname = p.attributes?.author?.username;
+    const pAuthorId = p.relationships?.author?.data?.id;
+    if (uname && uname !== 'null' && pAuthorId) {
+      usernameToUserId[uname] = pAuthorId;
+    }
+  }
+
+  for (const c of comments) {
+    const pid = c.relationships?.post?.data?.id;
+    if (!pid) continue;
+    commentMap[pid] = (commentMap[pid] || 0) + 1;
+    if (!commentsByPost[pid]) commentsByPost[pid] = [];
+    commentsByPost[pid].push(c);
+
+    const authorId = c.relationships?.author?.data?.id;
+
+    // 1. 관리자 오버라이드 우선
+    let responderInfo = authorId && OVERRIDES.users[authorId] ? OVERRIDES.users[authorId] : null;
+
+    // 2. user ID 기반 매칭
+    if (!responderInfo) responderInfo = authorId ? RESPONDERS[authorId] : null;
+
+    // 3. username 기반 역조회 (포스트 작성자 userId 캐시 활용)
+    if (!responderInfo && authorId) {
+      for (const [uname, info] of Object.entries(RESPONDERS_BY_USERNAME)) {
+        if (usernameToUserId[uname] === authorId) {
+          responderInfo = info;
+          RESPONDERS[authorId] = info; // 향후 캐시
+          break;
+        }
+      }
+    }
+
+    // 4. 미확인 댓글 작성자 수집 (관리자 패널용)
+    if (!responderInfo && authorId) {
+      if (!unknownCommenters[authorId]) {
+        const postData = posts.find(pp => pp.id === pid);
+        unknownCommenters[authorId] = {
+          authorId,
+          postSubject: postData?.attributes?.content?.subject || '(제목 없음)',
+          commentText: stripHtml(c.attributes?.htmlContent || c.attributes?.content || '').slice(0, 100),
+          postId: pid,
+          count: 0
+        };
+      }
+      unknownCommenters[authorId].count++;
+    }
+
+    if (responderInfo) {
+      if (!responderMap[pid]) responderMap[pid] = [];
+      const already = responderMap[pid].find(r => r.group === responderInfo.group);
+      if (!already) responderMap[pid].push({ ...responderInfo, userId: authorId });
+    }
+  }
+
+  // Enrich posts
+  const enriched = posts.map(p => {
+    const a = p.attributes;
+    const uname = a.author?.username;
+    const subject = a.content?.subject || '(제목 없음)';
+    const bodyHtml = a.content?.bodyHtml || '';
+    const bodyText = stripHtml(bodyHtml);
+    const responders = responderMap[p.id] || [];
+    const isAnnouncement = uname && OFFICIAL_USERNAMES.has(uname);
+
+    // username → userId 캐시에 실제 ID 저장 (포스트엔 없지만 댓글엔 있으므로 별도 처리)
+    // 포스트 authorId는 관계에 없으므로 username만 기록
+    if (uname && uname !== 'null') usernameToUserId[uname] = uname; // 키 존재 표시
+
+    return {
+      id: p.id,
+      subject,
+      bodyHtml,
+      bodyText,
+      author: a.author?.shortName || '익명',
+      authorUsername: uname || null,
+      createdAt: a.createdAt,
+      commentCount: commentMap[p.id] || 0,
+      comments: commentsByPost[p.id] || [],
+      responders,
+      isAnswered: responders.length > 0,
+      isAnnouncement,
+      category: OVERRIDES.categories[p.id] || classifyPost(subject, bodyText),
+      board: key,
+      boardLabel: BOARDS[key].label,
+      boardColor: BOARDS[key].color,
+      webUrl: a.webUrl?.live || '',
+    };
+  });
+
+  return { posts: enriched, totalComments: comments.length };
+}
+
+function responderBadges(responders) {
+  if (!responders || responders.length === 0) return '';
+  return responders.map(r =>
+    `<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:${r.bg};color:${r.color}">${r.icon} ${r.name}</span>`
+  ).join(' ');
+}
+
+function renderPostList(key, filter) {
+  const data = state[key];
+  if (!data) return;
+
+  let posts = [...data.posts];
+  if (filter === 'answered')   posts = posts.filter(p => p.isAnswered && !p.isAnnouncement);
+  if (filter === 'unanswered') posts = posts.filter(p => !p.isAnswered && !p.isAnnouncement);
+  if (filter === 'notice')     posts = posts.filter(p => p.isAnnouncement);
+  if (filter === 'all')        posts = posts; // 공지 포함 전체
+  posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const container = document.getElementById(`${key}-posts`);
+  if (posts.length === 0) {
+    container.innerHTML = '<div class="loading-msg">해당 게시물이 없습니다.</div>';
+    return;
+  }
+
+  // POST_STORE에 저장 (모달 안전 참조)
+  posts.forEach(p => { POST_STORE[p.id] = p; });
+
+  container.innerHTML = posts.map(p => {
+    const newBadge = isToday(p.createdAt) ? '<span class="badge badge-new">NEW</span>' : '';
+    const dispAuthor = OVERRIDES.postAuthors[p.id] || p.author;
+    const authorSpan = isAdminMode
+      ? `<span class="admin-editable-author" onclick="event.stopPropagation();editPostAuthor('${p.id}',event)">${dispAuthor} ✏️</span>`
+      : `<span>${dispAuthor}</span>`;
+
+    if (p.isAnnouncement) {
+      return `
+      <div class="post-item" style="border-left:3px solid #534AB7;background:#FAFAFE" onclick="openModalById('${p.id}')">
+        <div class="post-top">
+          <div class="post-subject">
+            <span style="font-size:10px;font-weight:700;background:#534AB7;color:#fff;padding:2px 6px;border-radius:3px;margin-right:5px;vertical-align:middle">공지</span>${p.subject}
+          </div>
+          <div class="post-badges">${newBadge}</div>
+        </div>
+        <div class="post-preview">${p.bodyText}</div>
+        <div class="post-meta" style="flex-wrap:wrap;gap:4px">
+          ${authorSpan}<span>·</span>
+          <span>${timeAgo(p.createdAt)}</span><span>·</span>
+          <span class="post-comments">💬 ${p.commentCount}</span>
+        </div>
+      </div>`;
+    }
+
+    return `
+    <div class="post-item ${p.isAnswered ? 'official' : ''}" onclick="openModalById('${p.id}')">
+      <div class="post-top">
+        <div class="post-subject">${p.subject}</div>
+        <div class="post-badges">${newBadge}</div>
+      </div>
+      <div class="post-preview">${p.bodyText}</div>
+      <div class="post-meta" style="flex-wrap:wrap;gap:4px">
+        ${authorSpan}<span>·</span>
+        <span>${timeAgo(p.createdAt)}</span><span>·</span>
+        <span class="post-comments">💬 ${p.commentCount}</span><span>·</span>
+        ${isAdminMode
+          ? `<select onchange="saveCategoryOverride('${p.id}',this.value)" onclick="event.stopPropagation()"
+               style="font-size:10px;color:#534AB7;background:#EEEDFE;padding:1px 5px;border-radius:3px;border:1px solid #534AB7;cursor:pointer;font-weight:600">
+               ${['근무환경','사업방향','조직문화','보상/평가','복리후생','기타'].map(c=>`<option value="${c}" ${p.category===c?'selected':''}>${c}</option>`).join('')}
+             </select>`
+          : `<span style="color:#aaa;font-size:10px;background:#f0f0f0;padding:1px 6px;border-radius:3px">${p.category}</span>`}
+        ${p.isAnswered ? '<span>·</span>' + responderBadges(p.responders) : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterPosts(key, filter, btn) {
+  currentFilter[key] = filter;
+  document.querySelectorAll(`#${key}-tabs .tab-btn`).forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPostList(key, filter);
+}
+
+function setCatFilter(filter, btn) {
+  catChartFilter = filter;
+  document.querySelectorAll('#catFilterBtns .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCatStats();
+}
+
+function renderRecentFeed() {
+  if (!state.care || !state.mediai) return;
+  const all = [...state.care.posts, ...state.mediai.posts]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 20);
+
+  const container = document.getElementById('recent-feed');
+  // POST_STORE에 저장
+  all.forEach(p => { POST_STORE[p.id] = p; });
+
+  container.innerHTML = all.map(p => {
+    const noticeMark = p.isAnnouncement
+      ? '<span style="font-size:10px;font-weight:700;background:#534AB7;color:#fff;padding:1px 5px;border-radius:3px;margin-right:4px">공지</span>'
+      : '';
+    return `
+    <div class="tl-item" onclick="openModalById('${p.id}')" style="cursor:pointer">
+      <div class="tl-dot ${p.board}" style="background:${p.isAnnouncement ? '#534AB7' : p.boardColor}"></div>
+      <div class="tl-content">
+        <div class="tl-title">${noticeMark}${p.subject}</div>
+        <div class="tl-meta" style="flex-wrap:wrap;gap:4px">
+          <span style="color:${p.boardColor};font-weight:600">${p.boardLabel}</span>
+          &nbsp;·&nbsp;${isAdminMode
+            ? `<span class="admin-editable-author" onclick="event.stopPropagation();editPostAuthor('${p.id}',event)">${OVERRIDES.postAuthors[p.id]||p.author} ✏️</span>`
+            : (OVERRIDES.postAuthors[p.id]||p.author)
+          }&nbsp;·&nbsp;${timeAgo(p.createdAt)}&nbsp;·&nbsp;💬 ${p.commentCount}
+          ${p.isAnswered ? '&nbsp;' + responderBadges(p.responders) : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCatStats() {
+  if (!state.care || !state.mediai) return;
+
+  // Filter source posts by selected board
+  let sourcePosts;
+  if (catChartFilter === 'care')   sourcePosts = state.care.posts;
+  else if (catChartFilter === 'mediai') sourcePosts = state.mediai.posts;
+  else sourcePosts = [...state.care.posts, ...state.mediai.posts];
+
+  const all = sourcePosts.filter(p => !p.isAnnouncement);
+  const total = all.length || 1;
+
+  // Pastel palette
+  const CAT_COLORS = {
+    '근무환경': '#4CC9A4',
+    '사업방향': '#6AAEE0',
+    '조직문화': '#9E94E8',
+    '보상/평가': '#F5B86A',
+    '복리후생': '#F08585',
+    '기타':     '#C0C0C0',
+  };
+
+  const catCount = {}, catCare = {}, catMediai = {}, catAnswered = {};
+  for (const p of all) {
+    catCount[p.category]    = (catCount[p.category]    || 0) + 1;
+    catCare[p.category]     = (catCare[p.category]     || 0) + (p.board === 'care'   ? 1 : 0);
+    catMediai[p.category]   = (catMediai[p.category]   || 0) + (p.board === 'mediai' ? 1 : 0);
+    catAnswered[p.category] = (catAnswered[p.category] || 0) + (p.isAnswered ? 1 : 0);
+  }
+  const ALL_CATS = ['근무환경', '사업방향', '조직문화', '보상/평가', '복리후생', '기타'];
+  const sorted = ALL_CATS.map(cat => [cat, catCount[cat] || 0]).sort((a, b) => b[1] - a[1]);
+  const maxCat = sorted[0]?.[1] || 1;
+
+  // Top 10: 업로드된 좋아요 수 우선, 없으면 댓글 수 기준
+  const likesData = OVERRIDES.likes || {};
+  const hasLikes = all.some(p => (likesData[p.id] || 0) > 0);
+  const top10 = [...all].sort((a, b) => {
+    if (hasLikes) {
+      const la = likesData[a.id] || 0, lb = likesData[b.id] || 0;
+      return lb !== la ? lb - la : b.commentCount - a.commentCount;
+    }
+    return b.commentCount - a.commentCount;
+  }).slice(0, 10);
+  const maxTop = hasLikes
+    ? Math.max(...top10.map(p => likesData[p.id] || 0), 1)
+    : (top10[0]?.commentCount || 1);
+
+  // SVG 도넛 차트
+  const S = 220, cx = S/2, cy = S/2, R = 88, r = 54;
+  let sa = -Math.PI/2;
+  const slices = sorted.map(([cat, cnt]) => {
+    const col = CAT_COLORS[cat] || '#9E9E9E';
+    const a = (cnt / total) * 2 * Math.PI;
+    const ea = sa + a;
+    const lg = a > Math.PI ? 1 : 0;
+    const d = [
+      `M${cx+R*Math.cos(sa)},${cy+R*Math.sin(sa)}`,
+      `A${R},${R},0,${lg},1,${cx+R*Math.cos(ea)},${cy+R*Math.sin(ea)}`,
+      `L${cx+r*Math.cos(ea)},${cy+r*Math.sin(ea)}`,
+      `A${r},${r},0,${lg},0,${cx+r*Math.cos(sa)},${cy+r*Math.sin(sa)}Z`
+    ].join(' ');
+    sa = ea;
+    return `<path d="${d}" fill="${col}" stroke="#fff" stroke-width="2"/>`;
+  });
+  const answeredCount = all.filter(p=>p.isAnswered).length;
+  const answerRate = Math.round(answeredCount/total*100);
+  const donutSvg = `<svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">
+    ${slices.join('')}
+    <text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="28" font-weight="800" fill="#1a1a1a">${total}</text>
+    <text x="${cx}" y="${cy+16}" text-anchor="middle" font-size="12" fill="#aaa">게시물</text>
+  </svg>`;
+
+  const totalLikesSum = all.reduce((s,p) => s + (likesData[p.id]||0), 0);
+  const el = document.getElementById('cat-total-label');
+  if (el) el.textContent = `${total}건 · 답변 ${answeredCount}건${totalLikesSum > 0 ? ' · ❤️ ' + totalLikesSum : ''}`;
+
+  document.getElementById('cat-stats').innerHTML = `
+  <div class="cat-stats-grid">
+
+    <!-- ① 카테고리 분포 -->
+    <div class="cat-stats-col">
+      <div style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.8px;text-transform:uppercase;margin-bottom:20px">카테고리 분포</div>
+      <div style="display:flex;justify-content:center;margin-bottom:20px">${donutSvg}</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${sorted.map(([cat,cnt])=>{
+          const col=CAT_COLORS[cat]||'#9E9E9E';
+          const pct=Math.round(cnt/total*100);
+          return `<div style="display:flex;align-items:center;gap:10px">
+            <span style="width:8px;height:8px;border-radius:50%;background:${col};flex-shrink:0"></span>
+            <span style="font-size:12px;color:#555;flex:1;line-height:1">${cat}</span>
+            <span style="font-size:13px;font-weight:700;color:#222">${cnt}</span>
+            <span style="font-size:10px;color:#ccc;width:28px;text-align:right">${pct}%</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="cat-stats-divider"></div>
+
+    <!-- ② 카테고리별 현황 -->
+    <div class="cat-stats-col">
+      <div style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.8px;text-transform:uppercase;margin-bottom:20px">카테고리별 현황</div>
+      <div style="display:flex;flex-direction:column;gap:20px">
+        ${sorted.map(([cat,cnt])=>{
+          const col=CAT_COLORS[cat]||'#9E9E9E';
+          const c=catCare[cat]||0, mi=catMediai[cat]||0;
+          const ans=catAnswered[cat]||0;
+          const aRate=cnt?Math.round(ans/cnt*100):0;
+          const barW=Math.round(cnt/maxCat*100);
+          return `<div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <div style="display:flex;align-items:center;gap:7px">
+                <span style="width:8px;height:8px;border-radius:50%;background:${col};flex-shrink:0"></span>
+                <span style="font-size:12px;font-weight:600;color:#333">${cat}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:10px">
+                ${c > 0 ? `<span style="color:#2E7D6A">케어 ${c}</span>` : ''}
+                ${mi > 0 ? `<span style="color:#2563A0">메디아이 ${mi}</span>` : ''}
+                <span style="font-weight:700;color:${aRate>=70?'#1D9E75':'#bbb'};min-width:28px;text-align:right">${aRate}%</span>
+              </div>
+            </div>
+            <div style="height:5px;background:#f2f2f2;border-radius:3px;overflow:hidden">
+              <div style="height:100%;width:${barW}%;background:${col};border-radius:3px"></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="cat-stats-divider"></div>
+
+    <!-- ③ 직원 관심도 Top 10 -->
+    <div class="cat-stats-col">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.8px;text-transform:uppercase">직원 관심도 Top 10</div>
+        <span style="font-size:10px;color:#ccc">${hasLikes ? '❤️ 좋아요 기준' : '💬 댓글 수 기준'}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:13px">
+        ${top10.map((p,i)=>{
+          const val=hasLikes ? (likesData[p.id]||0) : p.commentCount;
+          const barPct=maxTop?Math.round(val/maxTop*100):0;
+          const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':null;
+          const rankEl=medal
+            ? `<span style="font-size:14px;line-height:1;flex-shrink:0">${medal}</span>`
+            : `<span style="font-size:11px;font-weight:700;color:#ccc;width:20px;text-align:center;flex-shrink:0">${i+1}</span>`;
+          return `<div onclick="openModalById('${p.id}')" style="cursor:pointer" title="${p.subject}">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+              ${rankEl}
+              <span style="font-size:11px;color:#333;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3">${p.subject}</span>
+              <span style="font-size:12px;font-weight:700;color:#534AB7;flex-shrink:0">${val}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="width:22px;flex-shrink:0"></span>
+              <div style="flex:1;height:3px;background:#f2f2f2;border-radius:2px;overflow:hidden">
+                <div style="height:100%;width:${barPct}%;background:#534AB7;border-radius:2px;opacity:.5"></div>
+              </div>
+              <span style="font-size:10px;color:#ccc;flex-shrink:0;width:42px;text-align:right">${p.board==='care'?'GC케어':'메디아이'}</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+  </div>`;
+}
+
+function renderSummary() {
+  if (!state.care || !state.mediai) return;
+  const all = [...state.care.posts, ...state.mediai.posts];
+  const cp = state.care.posts.length;
+  const mp = state.mediai.posts.length;
+  const cc = state.care.totalComments;
+  const mc = state.mediai.totalComments;
+
+  const nonAnnouncePosts = all.filter(p => !p.isAnnouncement);
+  const answered = nonAnnouncePosts.filter(p => p.isAnswered).length;
+  const recentNew = all.filter(p => isWithin7Days(p.createdAt) && !p.isAnnouncement).length;
+
+  const answerRate = nonAnnouncePosts.length > 0
+    ? Math.round(answered / nonAnnouncePosts.length * 100) : 0;
+  const totalLikesSum = Object.values(OVERRIDES.likes || {}).reduce((s,n)=>s+n, 0);
+
+  document.getElementById('s-care-posts').textContent     = cp;
+  document.getElementById('s-mediai-posts').textContent   = mp;
+  document.getElementById('s-total-posts').textContent    = cp + mp;
+  document.getElementById('s-total-comments').textContent = (cc + mc).toLocaleString();
+  document.getElementById('s-total-likes').textContent    = totalLikesSum > 0 ? totalLikesSum.toLocaleString() : '0';
+  document.getElementById('s-likes-sub').textContent      = totalLikesSum > 0 ? '엑셀 기준' : '업로드 필요';
+
+  document.getElementById('s-answered').textContent       = answered;
+  document.getElementById('s-answered-sub').textContent   = `전체 ${nonAnnouncePosts.length}건 중`;
+  document.getElementById('s-today').textContent          = recentNew;
+
+  document.getElementById('care-count').textContent   = `${cp}건 · 댓글 ${cc}개`;
+  document.getElementById('mediai-count').textContent = `${mp}건 · 댓글 ${mc}개`;
+}
+
+function openModalById(id) {
+  const post = POST_STORE[id];
+  if (!post) { console.warn('Post not found:', id); return; }
+  openModal(post);
+}
+
+function openModal(p) {
+  const post = typeof p === 'string' ? JSON.parse(p) : p;
+  _currentModalPostId = post.id;
+  document.getElementById('modalSubject').textContent = post.subject;
+  const catOptions = ['근무환경','사업방향','조직문화','보상/평가','복리후생','기타'];
+  document.getElementById('modalMeta').innerHTML =
+    `<span style="color:${post.boardColor};font-weight:600">${post.boardLabel}</span>
+     ${isAdminMode
+       ? `<span class="admin-editable-author" onclick="editPostAuthor('${post.id}',event)">${OVERRIDES.postAuthors[post.id]||post.author} ✏️</span>`
+       : `<span>${OVERRIDES.postAuthors[post.id]||post.author}</span>`}
+     <span>${new Date(post.createdAt).toLocaleString('ko-KR')}</span>
+     ${isAdminMode
+       ? `<span style="display:inline-flex;align-items:center;gap:4px">
+            카테고리:
+            <select onchange="saveCategoryOverride('${post.id}',this.value)"
+              style="padding:2px 6px;border:1px solid #534AB7;border-radius:4px;font-size:12px;background:#fff;color:#534AB7;font-weight:600">
+              ${catOptions.map(c => `<option value="${c}" ${post.category===c?'selected':''}>${c}</option>`).join('')}
+            </select>
+            ${OVERRIDES.categories[post.id] ? '<span style="color:#534AB7;font-size:10px;font-weight:600">수정됨</span>' : ''}
+          </span>`
+       : `<span>카테고리: <strong>${post.category}</strong></span>`}
+     ${post.isAnswered ? responderBadges(post.responders) : ''}`;
+  document.getElementById('modalBody').innerHTML = post.bodyHtml || post.bodyText;
+
+  const commentsHtml = post.comments && post.comments.length > 0
+    ? `<div class="modal-comments-title">댓글 ${post.comments.length}개</div>` +
+      post.comments.map(c => {
+        const authorId = c.relationships?.author?.data?.id;
+        const responder = authorId ? RESPONDERS[authorId] : null;
+        const style = responder
+          ? `background:${responder.bg};border:1px solid ${responder.color}40`
+          : '';
+        const authorLabel = responder
+          ? `${responder.icon} ${responder.name} <span style="font-size:10px;color:#888;font-weight:400">(공식)</span>`
+          : '익명';
+        const cAt = c.attributes?.createdAt
+          ? new Date(c.attributes.createdAt).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})
+          : '';
+        const groupOpts = Object.entries(GROUP_PRESETS).map(([g,pr])=>
+          `<option value="${g}" ${responder?.group===g?'selected':''}>${pr.icon} ${pr.name}</option>`).join('');
+        const adminCommentCtrl = (isAdminMode && authorId)
+          ? `<select onchange="saveCommentAuthorOverride('${authorId}',this.value)"
+               style="font-size:10px;padding:2px 5px;border:1px solid #534AB7;border-radius:4px;background:#fff;color:#534AB7;cursor:pointer;margin-left:6px">
+               <option value="">역할 지정...</option>${groupOpts}
+             </select>` : '';
+        return `<div class="comment-item" style="${style}">
+          <div class="comment-author" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px">
+            <span style="display:flex;align-items:center">${authorLabel}${adminCommentCtrl}</span>
+            ${cAt ? `<span style="font-size:10px;color:#bbb;font-weight:400">${cAt}</span>` : ''}
+          </div>
+          ${c.attributes.htmlContent || c.attributes.content || ''}
+        </div>`;
+      }).join('')
+    : '<div style="color:#aaa;font-size:12px;padding:8px 0">댓글이 없습니다.</div>';
+
+  document.getElementById('modalComments').innerHTML = commentsHtml;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  _currentModalPostId = null;
+}
+
+// ── 작성자 편집 ──────────────────────────────────────────
+function editPostAuthor(postId, event) {
+  event.stopPropagation();
+  _editingPostId = postId;
+  const popup = document.getElementById('authorEditPopup');
+  document.getElementById('authorEditTitle').textContent = '게시글 작성자 수정';
+  document.getElementById('authorEditInput').value = OVERRIDES.postAuthors[postId] || (POST_STORE[postId]?.author || '');
+  // 팝업 위치 — 클릭 지점 근방
+  const x = Math.min(event.clientX + 8, window.innerWidth - 296);
+  const y = Math.min(event.clientY + 8, window.innerHeight - 160);
+  popup.style.left = x + 'px';
+  popup.style.top  = y + 'px';
+  popup.style.display = 'block';
+  setTimeout(() => document.getElementById('authorEditInput').focus(), 60);
+  // 바깥 클릭 시 닫기
+  setTimeout(() => document.addEventListener('click', _closeAuthorEditOnOutside, { once: true }), 100);
+}
+function _closeAuthorEditOnOutside(e) {
+  if (!document.getElementById('authorEditPopup').contains(e.target)) closeAuthorEdit();
+}
+function closeAuthorEdit() {
+  document.getElementById('authorEditPopup').style.display = 'none';
+  document.removeEventListener('click', _closeAuthorEditOnOutside);
+  _editingPostId = null;
+}
+function clearAuthorEdit() {
+  if (!_editingPostId) return;
+  delete OVERRIDES.postAuthors[_editingPostId];
+  saveOverrides();
+  _refreshAfterAuthorEdit();
+  closeAuthorEdit();
+}
+function confirmAuthorEdit() {
+  if (!_editingPostId) return;
+  const name = document.getElementById('authorEditInput').value.trim();
+  if (name) OVERRIDES.postAuthors[_editingPostId] = name;
+  else delete OVERRIDES.postAuthors[_editingPostId];
+  saveOverrides();
+  _refreshAfterAuthorEdit();
+  closeAuthorEdit();
+}
+function _refreshAfterAuthorEdit() {
+  renderPostList('care',   currentFilter.care);
+  renderPostList('mediai', currentFilter.mediai);
+
+  // 모달이 열려있으면 재렌더
+  if (_currentModalPostId && POST_STORE[_currentModalPostId]) {
+    openModal(POST_STORE[_currentModalPostId]);
+  }
+}
+
+function saveCommentAuthorOverride(authorId, group) {
+  if (!authorId || !group) return;
+  const preset = GROUP_PRESETS[group];
+  if (!preset) return;
+  const info = { ...preset, group };
+  OVERRIDES.users[authorId] = info;
+  RESPONDERS[authorId] = info;
+  delete unknownCommenters[authorId];
+  saveOverrides();
+  // 데이터 재처리 후 모달 재열기
+  const openPostId = _currentModalPostId;
+  loadAll().then(() => {
+    if (openPostId && POST_STORE[openPostId]) openModal(POST_STORE[openPostId]);
+  });
+}
+// ─────────────────────────────────────────────────────────
+
+// ── 관리자 인증 ─────────────────────────────────────────
+function openAdminPanel() {
+  if (!isAdminMode) { openAuthModal(); return; }
+  openAdminPanelDirect();
+}
+function openAuthModal() {
+  document.getElementById('authOverlay').classList.add('show');
+  document.getElementById('adminPwInput').value = '';
+  document.getElementById('authError').textContent = '';
+  setTimeout(() => document.getElementById('adminPwInput').focus(), 120);
+}
+function closeAuth() {
+  document.getElementById('authOverlay').classList.remove('show');
+}
+function checkAdminPw() {
+  if (document.getElementById('adminPwInput').value === '1111') {
+    isAdminMode = true;
+    closeAuth();
+    document.getElementById('adminModeBar').style.display = 'flex';
+    renderPostList('care',   currentFilter.care);
+    renderPostList('mediai', currentFilter.mediai);
+    openAdminPanelDirect();
+  } else {
+    document.getElementById('authError').textContent = '비밀번호가 올바르지 않습니다.';
+    document.getElementById('adminPwInput').value = '';
+    document.getElementById('adminPwInput').focus();
+  }
+}
+function exitAdminMode() {
+  isAdminMode = false;
+  document.getElementById('adminModeBar').style.display = 'none';
+  closeAdmin();
+  renderPostList('care',   currentFilter.care);
+  renderPostList('mediai', currentFilter.mediai);
+}
+
+// ── 관리자 패널 ──────────────────────────────────────────
+function openAdminPanelDirect() {
+  document.getElementById('adminOverlay').classList.add('show');
+  const firstBtn = document.querySelector('#adminTabs .tab-btn');
+  showAdminTab('users', firstBtn);
+}
+function closeAdmin() {
+  document.getElementById('adminOverlay').classList.remove('show');
+}
+function showAdminTab(tab, btn) {
+  ['adminUsers','adminCategories','adminLikes','adminActionReport','adminAnalytics','adminOverridesList'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.querySelectorAll('#adminTabs .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (tab === 'users')           { document.getElementById('adminUsers').style.display = 'block'; renderAdminUsers(); }
+  else if (tab === 'categories') { document.getElementById('adminCategories').style.display = 'block'; renderAdminCategories(); }
+  else if (tab === 'likes')      { document.getElementById('adminLikes').style.display = 'block'; renderAdminLikes(); }
+  else if (tab === 'actionReport') { document.getElementById('adminActionReport').style.display = 'block'; renderAdminActionReport(); }
+  else if (tab === 'analytics')  { document.getElementById('adminAnalytics').style.display = 'block'; renderAdminAnalytics(); }
+  else                           { document.getElementById('adminOverridesList').style.display = 'block'; renderAdminOverrides(); }
+}
+
+function renderAdminUsers() {
+  const unknowns = Object.values(unknownCommenters);
+  if (unknowns.length === 0) {
+    document.getElementById('adminUsers').innerHTML =
+      '<div class="admin-empty">미확인 댓글 작성자가 없습니다.<br><small style="color:#ccc">모든 댓글 작성자가 정상 식별된 상태입니다.</small></div>';
+    return;
+  }
+  const groupOptions = Object.entries(GROUP_PRESETS).map(([g, p]) =>
+    `<option value="${g}">${p.icon} ${p.name}</option>`).join('');
+  document.getElementById('adminUsers').innerHTML = `
+    <div class="admin-section">
+      <h4>미확인 댓글 작성자 ${unknowns.length}명 — 역할을 지정하면 답변 완료로 처리됩니다</h4>
+      <div class="admin-scroll">
+        ${unknowns.map(u => `
+          <div class="admin-user-card">
+            <div class="user-id">ID: ${u.authorId} &nbsp;·&nbsp; 댓글 ${u.count}개</div>
+            <div class="comment-preview">"${u.commentText || '(내용 없음)'}"</div>
+            <div style="font-size:11px;color:#888;margin-bottom:8px">게시물: ${u.postSubject}</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <select id="grp-${u.authorId}" class="admin-select">
+                <option value="">그룹 선택...</option>
+                ${groupOptions}
+              </select>
+              <button class="admin-save-btn" onclick="saveUserOverride('${u.authorId}',document.getElementById('grp-${u.authorId}').value)">저장</button>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function renderAdminCategories() {
+  const allPosts = [...(state.care?.posts||[]), ...(state.mediai?.posts||[])].filter(p => !p.isAnnouncement);
+  if (allPosts.length === 0) {
+    document.getElementById('adminCategories').innerHTML = '<div class="admin-empty">데이터를 먼저 로드하세요.</div>';
+    return;
+  }
+  const cats = ['근무환경','사업방향','조직문화','보상/평가','복리후생','기타'];
+  document.getElementById('adminCategories').innerHTML = `
+    <div class="admin-section">
+      <h4>게시물 카테고리 수정 — 변경 즉시 저장됩니다 (새로고침 후에도 유지)</h4>
+      <div class="admin-scroll">
+        <table class="admin-table">
+          <thead><tr style="border-bottom:2px solid #eee">
+            <th style="text-align:left;color:#888;padding:6px 8px;font-weight:600">게시물</th>
+            <th style="text-align:left;color:#888;padding:6px 8px;font-weight:600;width:160px">카테고리</th>
+            <th style="width:56px"></th>
+          </tr></thead>
+          <tbody>
+            ${allPosts.map(p => `
+              <tr>
+                <td>
+                  <div style="max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.subject}</div>
+                  <div style="font-size:10px;color:#aaa">${p.boardLabel}${OVERRIDES.categories[p.id]?' · <span style="color:#534AB7;font-weight:600">수정됨</span>':''}</div>
+                </td>
+                <td>
+                  <select class="admin-select" onchange="saveCategoryOverride('${p.id}',this.value)">
+                    ${cats.map(c=>`<option value="${c}" ${(OVERRIDES.categories[p.id]||p.category)===c?'selected':''}>${c}</option>`).join('')}
+                  </select>
+                </td>
+                <td style="text-align:center">
+                  ${OVERRIDES.categories[p.id]?`<button class="admin-reset-btn" onclick="removeCategoryOverride('${p.id}')">초기화</button>`:''}
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function renderAdminLikes() {
+  const likes = OVERRIDES.likes || {};
+  const likeCount = Object.keys(likes).length;
+  const totalLikesSum = Object.values(likes).reduce((s,n)=>s+n, 0);
+  document.getElementById('adminLikes').innerHTML = `
+    <div class="admin-section">
+      <h4>❤️ 반응 수(좋아요) 업로드</h4>
+      <p style="font-size:12px;color:#888;margin-bottom:4px;line-height:1.7">
+        패들렛 보드 → <strong>공유</strong> → <strong>내보내기</strong> → <strong>Excel(.xlsx) 다운로드</strong><br>
+        다운받은 파일을 아래에 업로드하면 <strong>이모지(❤️) 반응 수</strong>가 자동으로 게시물에 매칭됩니다.<br>
+        <span style="color:#bbb">파일명은 달라도 됩니다 — 시트명 "게시물"과 컬럼 "제목", "이모지"가 있으면 됩니다.</span>
+      </p>
+      ${likeCount > 0 ? `
+      <div style="background:#E1F5EE;border-radius:8px;padding:10px 14px;margin:12px 0;font-size:12px;color:#0F6E56;font-weight:600;display:flex;align-items:center;justify-content:space-between">
+        <span>현재 ${likeCount}개 게시물 저장 · 총 ❤️ ${totalLikesSum}개</span>
+        <button onclick="clearAllLikes()" style="font-size:10px;color:#A32D2D;background:#fff;border:1px solid #f0c0c0;border-radius:4px;padding:3px 10px;cursor:pointer;font-weight:600">전체 초기화</button>
+      </div>` : `<div style="background:#f8f8f8;border-radius:8px;padding:10px 14px;margin:12px 0;font-size:12px;color:#aaa">아직 업로드된 반응 수 데이터가 없습니다.</div>`}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+        <div style="border:1.5px solid #e0f0e8;border-radius:10px;padding:18px">
+          <div style="font-size:13px;font-weight:700;color:#0F6E56;margin-bottom:4px">GC케어브릿지</div>
+          <div style="font-size:11px;color:#aaa;margin-bottom:14px">케어.xlsx (패들렛 내보내기 파일)</div>
+          <label style="display:block;width:100%;padding:10px;border:1.5px dashed #c0ddd0;border-radius:7px;cursor:pointer;background:#f8fdf9;text-align:center;font-size:12px;color:#555">
+            <input type="file" accept=".xlsx,.xls" style="display:none" onchange="handleExcelUpload('care',this.files[0],this)">
+            📂 파일 선택 또는 드래그
+          </label>
+          <div id="care-upload-status" style="font-size:11px;color:#0F6E56;margin-top:8px;min-height:16px;font-weight:600"></div>
+        </div>
+        <div style="border:1.5px solid #dde8f5;border-radius:10px;padding:18px">
+          <div style="font-size:13px;font-weight:700;color:#185FA5;margin-bottom:4px">GC메디아이 케어브릿지</div>
+          <div style="font-size:11px;color:#aaa;margin-bottom:14px">메디아이.xlsx (패들렛 내보내기 파일)</div>
+          <label style="display:block;width:100%;padding:10px;border:1.5px dashed #b8cfe8;border-radius:7px;cursor:pointer;background:#f8fafd;text-align:center;font-size:12px;color:#555">
+            <input type="file" accept=".xlsx,.xls" style="display:none" onchange="handleExcelUpload('mediai',this.files[0],this)">
+            📂 파일 선택 또는 드래그
+          </label>
+          <div id="mediai-upload-status" style="font-size:11px;color:#185FA5;margin-top:8px;min-height:16px;font-weight:600"></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Phase 2 Action Report ────────────────────────────────
+function getActionReport() {
+  return OVERRIDES.actionReport || DEFAULT_ACTION_REPORT;
+}
+
+function renderActionReport() {
+  const ar = getActionReport();
+  const period = document.getElementById('phase1-period');
+  if (period) period.textContent = ar.period || '';
+
+  const colDefs = [
+    { key: 'done', label: '조치 완료', colorClass: 'ar-done', boxClass: 'done', headerColor: '#0F6E56' },
+    { key: 'wip',  label: '조치 진행중', colorClass: 'ar-wip', boxClass: 'wip', headerColor: '#B45309' },
+    { key: 'ceo',  label: '경영진 직접 답변', colorClass: '', boxClass: 'ceo', headerColor: '#185FA5' },
+  ];
+
+  const html = `<div class="three-col" style="gap:12px;margin-bottom:0">` +
+    colDefs.map(col => {
+      const items = ar[col.key] || [];
+      const rows = items.map(([subj, detail]) =>
+        `<tr><td>${subj}</td><td class="${col.colorClass}" style="${col.key==='ceo'?'color:#185FA5;font-size:11px':''}">${detail}</td></tr>`
+      ).join('');
+      return `
+        <div class="ar-box ${col.boxClass}">
+          <h4 style="color:${col.headerColor}">${col.label} — ${items.length}건</h4>
+          <table class="ar-table"><tbody>${rows}</tbody></table>
+        </div>`;
+    }).join('') + `</div>`;
+
+  document.getElementById('phase1-report').innerHTML = html;
+}
+
+function renderAdminActionReport() {
+  const ar = getActionReport();
+  const colDefs = [
+    { key: 'done', label: '조치 완료',        accent: '#0F6E56', bg: '#E1F5EE' },
+    { key: 'wip',  label: '조치 진행중',       accent: '#B45309', bg: '#FFF8E1' },
+    { key: 'ceo',  label: '경영진 직접 답변',  accent: '#185FA5', bg: '#E6F1FB' },
+  ];
+
+  const periodRow = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 14px;background:#f8f8f8;border-radius:8px">
+      <span style="font-size:12px;font-weight:600;color:#555;white-space:nowrap">기간</span>
+      <input id="ar-period-input" type="text" value="${ar.period||''}"
+        style="flex:1;border:1.5px solid #ddd;border-radius:6px;padding:5px 10px;font-size:12px"
+        placeholder="예: 2026.06.01 ~ 08.31">
+      <button onclick="saveArPeriod()" style="background:#534AB7;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">저장</button>
+    </div>`;
+
+  const cols = colDefs.map(col => {
+    const items = ar[col.key] || [];
+    const rows = items.map(([subj, detail], idx) => `
+      <div style="display:flex;align-items:flex-start;gap:6px;padding:7px 0;border-bottom:1px solid #f0f0f0" id="ar-row-${col.key}-${idx}">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;color:#333;line-height:1.4">${subj}</div>
+          <div style="font-size:11px;color:#777;margin-top:2px">${detail}</div>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button onclick="openArEdit('${col.key}',${idx})"
+            style="font-size:10px;padding:3px 8px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer">수정</button>
+          <button onclick="deleteArItem('${col.key}',${idx})"
+            style="font-size:10px;padding:3px 8px;border:1px solid #f0c0c0;border-radius:4px;background:#fff;color:#A32D2D;cursor:pointer">삭제</button>
+        </div>
+      </div>`).join('');
+
+    return `
+      <div style="border:1.5px solid ${col.bg};border-radius:10px;padding:14px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:13px;font-weight:700;color:${col.accent}">${col.label} — ${items.length}건</span>
+          <button onclick="openArAdd('${col.key}')"
+            style="font-size:11px;padding:4px 12px;background:${col.accent};color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:600">+ 추가</button>
+        </div>
+        <div id="ar-list-${col.key}">${rows}</div>
+        <div id="ar-add-form-${col.key}" style="display:none;margin-top:10px;padding:10px;background:#f9f9f9;border-radius:7px;border:1.5px dashed #ddd">
+          <input id="ar-add-subj-${col.key}" type="text" placeholder="이슈 제목"
+            style="width:100%;box-sizing:border-box;border:1.5px solid #ddd;border-radius:5px;padding:6px 10px;font-size:12px;margin-bottom:6px">
+          <input id="ar-add-detail-${col.key}" type="text" placeholder="처리 내용"
+            style="width:100%;box-sizing:border-box;border:1.5px solid #ddd;border-radius:5px;padding:6px 10px;font-size:12px;margin-bottom:8px">
+          <div style="display:flex;gap:6px;justify-content:flex-end">
+            <button onclick="closeArAdd('${col.key}')" style="padding:5px 12px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:12px">취소</button>
+            <button onclick="confirmArAdd('${col.key}')" style="padding:5px 14px;background:${col.accent};color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700">저장</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('adminActionReport').innerHTML = `
+    <div class="admin-section" style="max-height:60vh;overflow-y:auto">
+      ${periodRow}${cols}
+    </div>`;
+}
+
+// ── Action Report CRUD ────────────────────────────────────
+function getArData() {
+  if (!OVERRIDES.actionReport) OVERRIDES.actionReport = JSON.parse(JSON.stringify(DEFAULT_ACTION_REPORT));
+  return OVERRIDES.actionReport;
+}
+function saveArPeriod() {
+  const val = document.getElementById('ar-period-input').value.trim();
+  getArData().period = val;
+  saveOverrides();
+  renderActionReport();
+  document.getElementById('ar-period-input').style.background = '#E1F5EE';
+  setTimeout(() => { const el = document.getElementById('ar-period-input'); if (el) el.style.background = ''; }, 1000);
+}
+function openArAdd(key) {
+  document.getElementById(`ar-add-form-${key}`).style.display = 'block';
+  document.getElementById(`ar-add-subj-${key}`).focus();
+}
+function closeArAdd(key) {
+  document.getElementById(`ar-add-form-${key}`).style.display = 'none';
+  document.getElementById(`ar-add-subj-${key}`).value = '';
+  document.getElementById(`ar-add-detail-${key}`).value = '';
+}
+function confirmArAdd(key) {
+  const subj = document.getElementById(`ar-add-subj-${key}`).value.trim();
+  const detail = document.getElementById(`ar-add-detail-${key}`).value.trim();
+  if (!subj) return;
+  const ar = getArData();
+  if (!ar[key]) ar[key] = [];
+  ar[key].push([subj, detail]);
+  saveOverrides();
+  renderActionReport();
+  renderAdminActionReport();
+}
+function deleteArItem(key, idx) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  const ar = getArData();
+  ar[key].splice(idx, 1);
+  saveOverrides();
+  renderActionReport();
+  renderAdminActionReport();
+}
+function openArEdit(key, idx) {
+  const ar = getArData();
+  const [subj, detail] = ar[key][idx];
+  const row = document.getElementById(`ar-row-${key}-${idx}`);
+  if (!row) return;
+  row.innerHTML = `
+    <div style="flex:1;min-width:0">
+      <input id="ar-edit-subj-${key}-${idx}" type="text" value="${subj.replace(/"/g,'&quot;')}"
+        style="width:100%;box-sizing:border-box;border:1.5px solid #534AB7;border-radius:5px;padding:5px 8px;font-size:12px;margin-bottom:4px">
+      <input id="ar-edit-detail-${key}-${idx}" type="text" value="${detail.replace(/"/g,'&quot;')}"
+        style="width:100%;box-sizing:border-box;border:1.5px solid #ddd;border-radius:5px;padding:5px 8px;font-size:11px">
+    </div>
+    <div style="display:flex;gap:4px;flex-shrink:0;align-items:flex-start;padding-top:2px">
+      <button onclick="confirmArEdit('${key}',${idx})"
+        style="font-size:10px;padding:3px 8px;background:#534AB7;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600">저장</button>
+      <button onclick="renderAdminActionReport()"
+        style="font-size:10px;padding:3px 8px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer">취소</button>
+    </div>`;
+  row.style.display = 'flex';
+}
+function confirmArEdit(key, idx) {
+  const subj = document.getElementById(`ar-edit-subj-${key}-${idx}`)?.value.trim();
+  const detail = document.getElementById(`ar-edit-detail-${key}-${idx}`)?.value.trim();
+  if (!subj) return;
+  const ar = getArData();
+  ar[key][idx] = [subj, detail || ''];
+  saveOverrides();
+  renderActionReport();
+  renderAdminActionReport();
+}
+
+// ── Visitor Analytics ────────────────────────────────────
+const VERCEL_PROJECT_ID = 'prj_Dw3QVF95Ul9acnShYyig7ZHbcBxY';
+const VERCEL_TEAM_ID    = 'team_QswqI7bsXRX8OOuyZldEoK3G';
+const ANALYTICS_TOKEN_KEY = 'carebridge_analytics_token_v1';
+
+function renderAdminAnalytics() {
+  const el = document.getElementById('adminAnalytics');
+  el.innerHTML = `<div class="admin-section"><div id="analytics-chart-area" style="text-align:center;padding:30px;color:#aaa;font-size:13px">데이터 불러오는 중...</div></div>`;
+  fetchAnalyticsData();
+}
+
+function fetchAnalyticsData() {
+  const to   = Date.now();
+  const from = to - 30 * 24 * 60 * 60 * 1000;
+  const url  = `/api/analytics?from=${from}&to=${to}&granularity=day`;
+
+  fetch(url)
+    .then(r => r.json())
+    .then(json => {
+      const rows = json.data || json.timeseries || [];
+      if (!Array.isArray(rows) || json.error) throw new Error(json.error || '데이터 없음');
+      drawAnalyticsChart(rows);
+    })
+    .catch(e => {
+      const el = document.getElementById('analytics-chart-area');
+      if (el) el.innerHTML = `<span style="color:#A32D2D">데이터를 불러올 수 없습니다: ${e.message}</span>`;
+    });
+}
+
+function drawAnalyticsChart(rows) {
+  const el = document.getElementById('analytics-chart-area');
+  if (!el) return;
+  if (!rows.length) { el.innerHTML = '<span style="color:#aaa">아직 방문 데이터가 없습니다.<br>스크립트가 배포된 후부터 집계됩니다.</span>'; return; }
+
+  const today = new Date().toISOString().slice(0,10);
+  const todayRow  = rows.find(r => (r.key||'').slice(0,10) === today);
+  const todayVisit = todayRow ? (todayRow.devices ?? todayRow.total ?? 0) : 0;
+  const mauVisit   = rows.reduce((s, r) => s + (r.devices ?? r.total ?? 0), 0);
+  const avgVisit   = rows.length ? Math.round(mauVisit / rows.length) : 0;
+  const maxVal     = Math.max(...rows.map(r => r.devices ?? r.total ?? 0), 1);
+
+  // Bar chart SVG
+  const W = 560, H = 160, PAD = 8;
+  const bw = Math.max(8, Math.floor((W - PAD * 2) / rows.length) - 2);
+  const bars = rows.map((r, i) => {
+    const v   = r.devices ?? r.total ?? 0;
+    const bh  = Math.max(2, Math.round((v / maxVal) * H));
+    const x   = PAD + i * ((W - PAD * 2) / rows.length);
+    const y   = H - bh;
+    const d   = (r.key || '').slice(5, 10); // MM-DD
+    const isToday = (r.key || '').slice(0,10) === today;
+    return `<rect x="${x}" y="${y}" width="${bw}" height="${bh}"
+      fill="${isToday ? '#534AB7' : '#A9A3E0'}" rx="2"
+      title="${d}: ${v}명">
+      <title>${d}: ${v}명 방문</title></rect>
+    ${v > 0 ? `<text x="${x + bw/2}" y="${y - 3}" text-anchor="middle" font-size="9" fill="#666">${v}</text>` : ''}`;
+  }).join('');
+
+  // X-axis labels (every 5 days)
+  const labels = rows.map((r, i) => {
+    if (i % 5 !== 0) return '';
+    const x = PAD + i * ((W - PAD * 2) / rows.length) + bw / 2;
+    const d = (r.key || '').slice(5, 10);
+    return `<text x="${x}" y="${H + 14}" text-anchor="middle" font-size="9" fill="#aaa">${d}</text>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+      <div style="background:#EEEDFE;border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:11px;color:#534AB7;font-weight:600;margin-bottom:4px">오늘 방문자</div>
+        <div style="font-size:26px;font-weight:800;color:#534AB7">${todayVisit.toLocaleString()}</div>
+        <div style="font-size:10px;color:#aaa">명</div>
+      </div>
+      <div style="background:#E1F5EE;border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:11px;color:#0F6E56;font-weight:600;margin-bottom:4px">최근 30일 MAU</div>
+        <div style="font-size:26px;font-weight:800;color:#0F6E56">${mauVisit.toLocaleString()}</div>
+        <div style="font-size:10px;color:#aaa">명</div>
+      </div>
+      <div style="background:#f8f8f8;border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:11px;color:#555;font-weight:600;margin-bottom:4px">일평균 방문자</div>
+        <div style="font-size:26px;font-weight:800;color:#333">${avgVisit.toLocaleString()}</div>
+        <div style="font-size:10px;color:#aaa">명/일</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:#888;margin-bottom:8px;font-weight:600">일별 방문자 (최근 30일) — 오늘 <span style="color:#534AB7">■</span></div>
+    <svg viewBox="0 0 ${W} ${H+20}" width="100%" style="overflow:visible">
+      ${bars}${labels}
+    </svg>
+    `;
+}
+
+function handleExcelUpload(board, file, inputEl) {
+  if (!file) return;
+  const statusId = `${board}-upload-status`;
+  const statusEl = document.getElementById(statusId);
+  if (statusEl) statusEl.textContent = '⏳ 파싱 중...';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array' });
+      const ws = wb.Sheets['게시물'];
+      if (!ws) throw new Error('"게시물" 시트를 찾을 수 없습니다.');
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+      const header = rows[0] || [];
+      const titleIdx = header.indexOf('제목');
+      const emojiIdx = header.indexOf('이모지');
+      if (titleIdx < 0) throw new Error('"제목" 컬럼을 찾을 수 없습니다.');
+      if (emojiIdx < 0) throw new Error('"이모지" 컬럼을 찾을 수 없습니다.');
+
+      if (!OVERRIDES.likes) OVERRIDES.likes = {};
+      let matched = 0, withLikes = 0;
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const title = (row[titleIdx] || '').toString().trim();
+        const emoji = (row[emojiIdx] || '').toString().trim();
+        if (!title) continue;
+
+        const m = emoji.match(/\((\d+)\)/);
+        const likeCount = m ? parseInt(m[1]) : 0;
+        if (likeCount > 0) withLikes++;
+
+        const post = Object.values(POST_STORE).find(p =>
+          p.board === board && p.subject.trim() === title
+        );
+        if (post) {
+          OVERRIDES.likes[post.id] = likeCount;
+          if (state[board]) {
+            const sp = state[board].posts.find(x => x.id === post.id);
+            if (sp) sp.likes = likeCount;
+          }
+          matched++;
+        }
+      }
+      saveOverrides();
+      renderCatStats();
+
+      const msg = `✅ ${matched}개 매칭 · ❤️ 있는 게시물 ${withLikes}개`;
+      if (statusEl) statusEl.textContent = msg;
+      renderAdminLikes();
+    } catch(err) {
+      if (statusEl) statusEl.textContent = '❌ 오류: ' + err.message;
+    }
+    if (inputEl) inputEl.value = '';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function clearAllLikes() {
+  if (!confirm('모든 좋아요 수 데이터를 초기화할까요?')) return;
+  OVERRIDES.likes = {};
+  saveOverrides();
+  ['care','mediai'].forEach(board => {
+    (state[board]?.posts || []).forEach(p => { p.likes = 0; });
+  });
+  renderCatStats();
+  renderAdminLikes();
+}
+
+function renderAdminOverrides() {
+  const userOvr   = Object.entries(OVERRIDES.users);
+  const catOvr    = Object.entries(OVERRIDES.categories);
+  const authorOvr = Object.entries(OVERRIDES.postAuthors);
+  if (userOvr.length === 0 && catOvr.length === 0 && authorOvr.length === 0) {
+    document.getElementById('adminOverridesList').innerHTML = '<div class="admin-empty">등록된 설정이 없습니다.</div>';
+    return;
+  }
+  let html = '';
+  if (userOvr.length > 0) {
+    html += `<div class="admin-section"><h4>등록된 답변자 (${userOvr.length}개)</h4>
+      <table class="admin-table">
+        ${userOvr.map(([uid, info]) => `
+          <tr>
+            <td style="font-family:monospace;font-size:10px;color:#aaa">${uid}</td>
+            <td><span style="background:${info.bg};color:${info.color};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">${info.icon} ${info.name}</span></td>
+            <td style="text-align:right"><button class="admin-del-btn" onclick="removeUserOverride('${uid}')">삭제</button></td>
+          </tr>`).join('')}
+      </table></div>`;
+  }
+  if (catOvr.length > 0) {
+    html += `<div class="admin-section"><h4>수정된 카테고리 (${catOvr.length}개)</h4>
+      <table class="admin-table">
+        ${catOvr.map(([pid, cat]) => `
+          <tr>
+            <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${POST_STORE[pid]?.subject || pid}</td>
+            <td style="color:#534AB7;font-weight:600">${cat}</td>
+            <td style="text-align:right"><button class="admin-del-btn" onclick="removeCategoryOverride('${pid}');renderAdminOverrides()">삭제</button></td>
+          </tr>`).join('')}
+      </table></div>`;
+  }
+  if (authorOvr.length > 0) {
+    html += `<div class="admin-section"><h4>수정된 작성자 (${authorOvr.length}개)</h4>
+      <table class="admin-table">
+        ${authorOvr.map(([pid, name]) => `
+          <tr>
+            <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#888;font-size:11px">${POST_STORE[pid]?.subject || pid}</td>
+            <td style="font-weight:600">${name}</td>
+            <td style="text-align:right"><button class="admin-del-btn" onclick="delete OVERRIDES.postAuthors['${pid}'];saveOverrides();renderAdminOverrides();renderPostList('care',currentFilter.care);renderPostList('mediai',currentFilter.mediai)">삭제</button></td>
+          </tr>`).join('')}
+      </table></div>`;
+  }
+  document.getElementById('adminOverridesList').innerHTML = html;
+}
+
+function saveUserOverride(authorId, group) {
+  if (!group) { alert('그룹을 선택해주세요.'); return; }
+  const preset = GROUP_PRESETS[group];
+  if (!preset) return;
+  const info = { ...preset, group };
+  OVERRIDES.users[authorId] = info;
+  RESPONDERS[authorId] = info;
+  delete unknownCommenters[authorId];
+  saveOverrides();
+  closeAdmin();
+  loadAll();
+}
+
+function removeUserOverride(authorId) {
+  delete OVERRIDES.users[authorId];
+  delete RESPONDERS[authorId];
+  saveOverrides();
+  renderAdminOverrides();
+  loadAll();
+}
+
+function saveCategoryOverride(postId, category) {
+  OVERRIDES.categories[postId] = category;
+  saveOverrides();
+  if (POST_STORE[postId]) POST_STORE[postId].category = category;
+  renderPostList('care', currentFilter.care);
+  renderPostList('mediai', currentFilter.mediai);
+  renderCatStats();
+}
+
+function removeCategoryOverride(postId) {
+  delete OVERRIDES.categories[postId];
+  saveOverrides();
+  if (POST_STORE[postId]) {
+    POST_STORE[postId].category = classifyPost(POST_STORE[postId].subject, POST_STORE[postId].bodyText);
+  }
+  renderPostList('care', currentFilter.care);
+  renderPostList('mediai', currentFilter.mediai);
+  renderCatStats();
+  renderAdminCategories();
+}
+// ─────────────────────────────────────────────────────────
+
+async function loadAll() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('loading');
+  btn.textContent = '불러오는 중...';
+
+  // likes.json에서 서버 좋아요 데이터 로드 (모든 기기 공통)
+  try {
+    const likesResp = await fetch('/likes.json');
+    if (likesResp.ok) {
+      const serverLikes = await likesResp.json();
+      // localStorage보다 서버 데이터 우선 적용
+      OVERRIDES.likes = { ...serverLikes, ...(OVERRIDES.likes || {}) };
+    }
+  } catch(e) { /* likes.json 없으면 localStorage 그대로 사용 */ }
+
+  try {
+    const [careData, mediaiData] = await Promise.all([
+      fetchBoard('care'),
+      fetchBoard('mediai')
+    ]);
+    state.care   = careData;
+    state.mediai = mediaiData;
+
+    renderSummary();
+    renderPostList('care',   currentFilter.care);
+    renderPostList('mediai', currentFilter.mediai);
+  
+    renderCatStats();
+
+    const now = new Date().toLocaleTimeString('ko-KR');
+    document.getElementById('lastUpdated').textContent = `마지막 갱신: ${now}`;
+  } catch (err) {
+    console.error(err);
+    ['care-posts','mediai-posts','cat-stats'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = `<div class="error-msg">데이터 로드 실패: ${err.message}</div>`;
+    });
+    document.getElementById('lastUpdated').textContent = '데이터 로드 실패';
+  }
+
+  btn.classList.remove('loading');
+  btn.innerHTML = '↻ 새로고침';
+}
+
+// Track this page visit (fire-and-forget)
+fetch('/api/track', { method: 'POST' }).catch(() => {});
+
+// Initial load + auto refresh every 2 minutes
+renderActionReport();
+loadAll();
+setInterval(loadAll, 120000);
+</script>
+</body>
+</html>
