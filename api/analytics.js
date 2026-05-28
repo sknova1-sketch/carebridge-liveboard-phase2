@@ -5,7 +5,7 @@ const BLOB_NAME = "visitors.json";
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   try {
-    const result = await get(BLOB_NAME, { access: "private" });
+    const result = await get(BLOB_NAME, { access: "public" });
     if (!result) throw new Error("no data");
     const data = await new Response(result.stream).json();
 
